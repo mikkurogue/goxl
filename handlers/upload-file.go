@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"goxl/database"
 	"goxl/util"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/fatih/color"
 )
 
 // UploadFile handles file uploads via multipart/form-data
@@ -56,7 +59,16 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Uploaded File Size:", header.Size)
 	fmt.Println("Uploaded File Header:", header.Header)
 
-	dstPath := filepath.Join("uploads", header.Filename)
+	var db database.Database
+	config, _ := util.ReadConfig()
+
+	connErr := db.Connect()
+	if connErr != nil {
+		color.Red(connErr.Error())
+	}
+	defer db.Disconnect()
+
+	dstPath := filepath.Join("uploads")
 	dst, err := os.Create(dstPath)
 	if err != nil {
 		fmt.Println("Error creating file on server:", err)
@@ -70,6 +82,23 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error saving file:", err)
 		util.RespondWithError(w, http.StatusInternalServerError, "Error saving file: "+err.Error())
 		return
+	}
+
+	var cols []string
+	for _, v := range config.Columns {
+		cols = append(cols, v.ColumnName)
+	}
+
+	insErr := db.InsertRow(
+		cols,
+		[]string{
+			"0",
+			"Mustang",
+			"Ford Mustang GT",
+		},
+	)
+	if insErr != nil {
+		color.Red(insErr.Error())
 	}
 
 	response := map[string]string{

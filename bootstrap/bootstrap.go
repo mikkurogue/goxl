@@ -8,7 +8,6 @@ import (
 )
 
 func Bootstrap() *http.ServeMux {
-
 	uploadDir := "uploads"
 	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 		err := os.MkdirAll(uploadDir, os.ModePerm)
@@ -22,4 +21,8 @@ func Bootstrap() *http.ServeMux {
 	mux.HandleFunc("/api/upload-file", handlers.UploadFile)
 
 	return mux
+}
+
+func RemoveDbStore() {
+	os.Remove("./store.db")
 }
