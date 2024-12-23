@@ -55,9 +55,9 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	fmt.Println("Uploaded File Name:", header.Filename)
-	fmt.Println("Uploaded File Size:", header.Size)
-	fmt.Println("Uploaded File Header:", header.Header)
+	// fmt.Println("Uploaded File Name:", header.Filename)
+	// fmt.Println("Uploaded File Size:", header.Size)
+	// fmt.Println("Uploaded File Header:", header.Header)
 
 	var db database.Database
 	config, _ := util.ReadConfig()
@@ -66,7 +66,6 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	if connErr != nil {
 		color.Red(connErr.Error())
 	}
-	defer db.Disconnect()
 
 	dstPath := filepath.Join("uploads")
 	dst, err := os.Create(dstPath)
@@ -100,6 +99,8 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	if insErr != nil {
 		color.Red(insErr.Error())
 	}
+
+	db.Disconnect()
 
 	response := map[string]string{
 		"message":   "File uploaded successfully",

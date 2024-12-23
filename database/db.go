@@ -101,11 +101,9 @@ func columnsToQuery(columns []util.Column) string {
 }
 
 func (db *Database) InsertRow(columns, values []string) error {
-	if checkIfStoreExist() {
-		return errors.New("what")
+	if !checkIfStoreExist() {
+		return errors.New("No database connection")
 	}
-
-	fmt.Println(db.Store)
 
 	tx, err := db.Store.Begin()
 	if err != nil {
@@ -137,7 +135,7 @@ func (db *Database) InsertRow(columns, values []string) error {
 }
 
 func columnsToInsertTx(columns []string) string {
-	var stmt string = "inert into uploads ("
+	var stmt string = "insert into uploads ("
 
 	for i := 0; i < len(columns); i++ {
 
