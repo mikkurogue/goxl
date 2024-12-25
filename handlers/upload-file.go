@@ -10,15 +10,11 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
+	"github.com/google/uuid"
 )
 
 // UploadFile handles file uploads via multipart/form-data
 func UploadFile(w http.ResponseWriter, r *http.Request) {
-	// Debug: Print the request method and headers
-	fmt.Println("Method:", r.Method)
-	fmt.Println("Headers:", r.Header)
-
-	// Ensure the method is POST
 	if r.Method != http.MethodPost {
 		util.RespondWithError(w, http.StatusMethodNotAllowed, "Invalid request method")
 		return
@@ -32,19 +28,11 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Debug: Print parsed form values
-	fmt.Println("Form Values:", r.Form)
-	fmt.Println("Form Files:", r.MultipartForm.File)
-
-	// Retrieve the 'name' field
 	name := r.FormValue("name")
 	if name == "" {
 		util.RespondWithError(w, http.StatusBadRequest, "Missing 'name' field")
 		return
 	}
-
-	// Retrieve the 'extension' field (optional)
-	extension := r.FormValue("extension")
 
 	// Retrieve the file from form data
 	file, header, err := r.FormFile("file")
@@ -67,7 +55,25 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 		color.Red(connErr.Error())
 	}
 
-	dstPath := filepath.Join("uploads")
+	newUuid, err := uuid.NewUUID()
+	if err != nil {
+		util.RespondWithError(w, http.StatusInternalServerError, "Something went wrong on the server, contact support")
+		return
+	}
+
+	// Create the subfolder path using the UUID
+	subfolderPath := filepath.Join("uploads", newUuid.String())
+
+	// Ensure the folder exists
+	err = os.MkdirAll(subfolderPath, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error creating subfolder:", err)
+		util.RespondWithError(w, http.StatusInternalServerError, "Error creating subfolder: "+err.Error())
+		return
+	}
+
+	// Define the destination file path inside the subfolder
+	dstPath := filepath.Join(subfolderPath, header.Filename) // You can change "uploaded_file" to the desired file name
 	dst, err := os.Create(dstPath)
 	if err != nil {
 		fmt.Println("Error creating file on server:", err)
@@ -88,25 +94,23 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 		cols = append(cols, v.ColumnName)
 	}
 
-	insErr := db.InsertRow(
-		cols,
-		[]string{
-			"0",
-			"Mustang",
-			"Ford Mustang GT",
-		},
-	)
+	var prc = database.ProcessRow{
+		Id:       newUuid.String(),
+		FileName: header.Filename,
+		FileSize: header.Size,
+	}
+
+	insErr := db.AddUpload(prc)
 	if insErr != nil {
-		color.Red(insErr.Error())
+		util.RespondWithError(w, http.StatusInternalServerError, "Something went wrong with creating upload instance...")
 	}
 
 	db.Disconnect()
 
 	response := map[string]string{
-		"message":   "File uploaded successfully",
-		"name":      name,
-		"file":      header.Filename,
-		"extension": extension,
+		"message": "File uploaded successfully",
+		"name":    name,
+		"file":    header.Filename,
 	}
 	util.RespondWithJson(w, http.StatusOK, response)
 }

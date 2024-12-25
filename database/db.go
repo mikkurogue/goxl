@@ -16,6 +16,12 @@ type Database struct {
 	Connected bool
 }
 
+type ProcessRow struct {
+	Id       string `json:"id"`
+	FileName string `json:"file_name"`
+	FileSize int64  `json:"file_size"`
+}
+
 func checkIfStoreExist() bool {
 	if _, err := os.Stat("./store.db"); errors.Is(err, os.ErrNotExist) {
 		return false
@@ -98,6 +104,32 @@ func columnsToQuery(columns []util.Column) string {
 	stmt += ");"
 
 	return stmt
+}
+
+func (db *Database) AddUpload(row ProcessRow) error {
+	if db.Store == nil {
+		panic("No database connection")
+	}
+
+	tx, err := db.Store.Begin()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare("insert into uploads (id, file_name, file_size) values (?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	stmt.Exec(row.Id, row.FileName, row.FileSize)
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (db *Database) InsertRow(columns, values []string) error {

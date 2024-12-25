@@ -4,15 +4,15 @@
   {
    "column_name": "id",
    "is_primary_key": true,
-   "type": "integer"
+   "type": "string"
   },
   {
-   "column_name": "name",
+   "column_name": "file_name",
    "is_primary_key": false,
    "type": "text"
   },
   {
-   "column_name": "vehicle",
+   "column_name": "file_size",
    "is_primary_key": false,
    "type": "text"
   }
