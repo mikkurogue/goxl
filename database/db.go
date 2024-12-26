@@ -132,6 +132,31 @@ func (db *Database) AddUpload(row ProcessRow) error {
 	return nil
 }
 
+func (db *Database) GetProcess(processId string) (ProcessRow, error) {
+	if !checkIfStoreExist() {
+		return ProcessRow{}, errors.New("No database connection")
+	}
+
+	rows, err := db.Store.Query("select * from uploads where id = ?", processId)
+	if err != nil {
+		return ProcessRow{}, err
+	}
+	defer rows.Close()
+
+	var p ProcessRow
+
+	if rows.Next() {
+		err := rows.Scan(&p.Id, &p.FileName, &p.FileSize)
+		if err != nil {
+			return ProcessRow{}, err
+		}
+	} else {
+		return ProcessRow{}, errors.New("no process for given id found")
+	}
+
+	return p, nil
+}
+
 func (db *Database) InsertRow(columns, values []string) error {
 	if !checkIfStoreExist() {
 		return errors.New("No database connection")
