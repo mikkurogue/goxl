@@ -19,7 +19,8 @@ func Bootstrap() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/upload-file", handlers.UploadFile)
-	mux.HandleFunc("/api/get-process", handlers.GetProcess)
+	mux.HandleFunc("/api/get-process", handlers.GetProcessDetails)
+	mux.HandleFunc("/api/download", handlers.DownloadFileFromProcess)
 
 	return mux
 }
