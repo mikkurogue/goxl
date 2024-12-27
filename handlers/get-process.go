@@ -72,7 +72,7 @@ func GetProcessDetails(w http.ResponseWriter, r *http.Request) {
 
 func DownloadFileFromProcess(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodPost {
 		util.RespondWithError(
 			w,
 			http.StatusBadRequest,

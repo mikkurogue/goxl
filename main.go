@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"goxl/bootstrap"
 	"goxl/database"
+	"goxl/middleware"
 	"goxl/util"
 	"net/http"
 	"os"
@@ -32,9 +33,12 @@ func main() {
 
 	mux := bootstrap.Bootstrap()
 
+	// wrap mux with cors middleware
+	handler := middleware.CORS(mux)
+
 	fmt.Println("Server running on http://localhost:9292")
 
-	error := http.ListenAndServe(":9292", mux)
+	error := http.ListenAndServe(":9292", handler)
 	if error != nil {
 		fmt.Println("Error starting server", error)
 	}
